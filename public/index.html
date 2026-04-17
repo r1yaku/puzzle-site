@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Secure Access</title>
+  <style>
+    @font-face {
+      font-family: "Monofrik";
+      src: url("Monofrik Demo.ttf") format("truetype");
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      background: black;
+      overflow: hidden;
+    }
+
+    body {
+      background: black;
+      color: #00ff00;
+      font-family: "Monofrik", monospace;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+    }
+
+    .container {
+      width: 1400px;
+      max-width: 90%;
+      position: relative;
+    }
+
+    h2, p {
+      margin: 0;
+      font-weight: normal;
+    }
+
+    #loadingSection,
+    #welcomeText,
+    #passwordSection {
+      display: none;
+      opacity: 0;
+    }
+
+    #loadingSection {
+      display: block;
+      opacity: 1;
+    }
+
+    .loading-title {
+      font-size: 27px;
+      margin-bottom: 24px;
+    }
+
+    .bar-box {
+      width: 70%;
+      margin: 0 auto;
+      height: 20px;
+      border: 2px solid #00ff00;
+      background: black;
+      padding: 4px;
+      box-sizing: border-box;
+      box-shadow: 0 0 8px #00ff00;
+    }
+
+    .bar-fill {
+      height: 100%;
+      width: 0%;
+      background: #00ff00;
+      box-shadow: 0 0 12px #00ff00;
+      transition: width 0.08s steps(2, end);
+    }
+
+    #loadingPercent {
+      font-size: 27px;
+      margin-top: 18px;
+    }
+
+    #welcomeText h2 {
+      font-size: 42px;
+    }
+
+    .fade-in {
+      animation: fadeIn 0.55s ease forwards;
+    }
+
+    .fade-out {
+      animation: fadeOut 0.7s ease forwards;
+    }
+
+    .password-ui {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .input-box {
+      width: 22vw;
+      min-width: 380px;
+      max-width: 600px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      border-bottom: 2px solid #6f6f6f;
+      padding-bottom: 2px;
+      min-height: 40px;
+    }
+
+    .fake-input {
+      position: relative;
+      min-width: 100%;
+      min-height: 34px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: black;
+      color: #00ff00;
+      font-size: 20px;
+      line-height: 1;
+      outline: none;
+      cursor: text;
+      user-select: none;
+      -webkit-user-select: none;
+      text-align: center;
+    }
+
+    .fake-input.placeholder {
+      color: #6f6f6f;
+    }
+
+    .display {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 1em;
+      white-space: pre;
+      text-align: center;
+    }
+
+    .caret {
+      display: inline-block;
+      width: 2px;
+      height: 0.95em;
+      background: #6f6f6f;
+      margin-left: 3px;
+      animation: blink 1s steps(1, end) infinite;
+      vertical-align: middle;
+    }
+
+    .fake-input:not(.focused) .caret {
+      opacity: 0;
+      animation: none;
+    }
+
+    button {
+      background: black;
+      color: #00ff00;
+      border: none;
+      padding: 0;
+      cursor: pointer;
+      font-size: 20px;
+      font-family: "Monofrik", monospace;
+      text-transform: lowercase;
+    }
+
+    button:hover,
+    button:focus,
+    button:active {
+      text-decoration: none;
+      color: #00ff00;
+      outline: none;
+    }
+
+    .shake {
+      animation: shake 0.18s steps(5, end);
+    }
+
+    .screen-corner {
+      position: fixed;
+      width: 69px;
+      height: 69px;
+      opacity: 0;
+      pointer-events: none;
+      z-index: 20;
+    }
+
+    .screen-corner::before,
+    .screen-corner::after {
+      content: "";
+      position: absolute;
+      background: #6f6f6f;
+    }
+
+    .screen-corner::before {
+      width: 69px;
+      height: 2px;
+    }
+
+    .screen-corner::after {
+      width: 2px;
+      height: 69px;
+    }
+
+    .corner-tl {
+      top: 34px;
+      left: 34px;
+    }
+
+    .corner-tl::before,
+    .corner-tl::after {
+      top: 0;
+      left: 0;
+    }
+
+    .corner-tr {
+      top: 34px;
+      right: 34px;
+    }
+
+    .corner-tr::before,
+    .corner-tr::after {
+      top: 0;
+      right: 0;
+    }
+
+    .corner-br {
+      bottom: 34px;
+      right: 34px;
+    }
+
+    .corner-br::before,
+    .corner-br::after {
+      bottom: 0;
+      right: 0;
+    }
+
+    .corner-bl {
+      bottom: 34px;
+      left: 34px;
+    }
+
+    .corner-bl::before,
+    .corner-bl::after {
+      bottom: 0;
+      left: 0;
+    }
+
+    .corner-in.corner-tl {
+      animation: cornerTL 0.8s ease forwards;
+    }
+
+    .corner-in.corner-tr {
+      animation: cornerTR 0.8s ease forwards;
+    }
+
+    .corner-in.corner-br {
+      animation: cornerBR 0.8s ease forwards;
+    }
+
+    .corner-in.corner-bl {
+      animation: cornerBL 0.8s ease forwards;
+    }
+
+    .clue {
+      position: fixed;
+      color: #6f6f6f;
+      font-size: 14px;
+      line-height: 1.35;
+      opacity: 0;
+      z-index: 19;
+      pointer-events: auto;
+      user-select: text;
+      -webkit-user-select: text;
+      max-width: 500px;
+      white-space: pre-line;
+      transition: opacity 0.8s ease, color 0.25s ease;
+      text-align: left;
+    }
+
+    .clue-tl {
+      top: 70px;
+      left: 64px;
+    }
+
+    .clue-tr {
+      top: 70px;
+      right: 64px;
+      max-width: 600px;
+    }
+
+    .clue-bl {
+      bottom: 60px;
+      left: 64px;
+      max-width: 600px;
+    }
+
+    .clue-br {
+      bottom: 70px;
+      right: 64px;
+      max-width: 600px;
+    }
+
+    .screen-corner.unlocked::before,
+    .screen-corner.unlocked::after {
+      background: #00ff00;
+    }
+
+    .clue.unlocked {
+      color: #00ff00;
+    }
+
+    @keyframes blink {
+      0% { opacity: 1; }
+      50% { opacity: 0; }
+      100% { opacity: 1; }
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    @keyframes fadeOut {
+      from { opacity: 1; }
+      to { opacity: 0; }
+    }
+
+    @keyframes shake {
+      0% { transform: translateX(0); }
+      20% { transform: translateX(-10px); }
+      40% { transform: translateX(10px); }
+      60% { transform: translateX(-8px); }
+      80% { transform: translateX(8px); }
+      100% { transform: translateX(0); }
+    }
+
+    @keyframes cornerTL {
+      from { opacity: 0; transform: translate(30px, 30px); }
+      to { opacity: 1; transform: translate(0, 0); }
+    }
+
+    @keyframes cornerTR {
+      from { opacity: 0; transform: translate(-30px, 30px); }
+      to { opacity: 1; transform: translate(0, 0); }
+    }
+
+    @keyframes cornerBR {
+      from { opacity: 0; transform: translate(-30px, -30px); }
+      to { opacity: 1; transform: translate(0, 0); }
+    }
+
+    @keyframes cornerBL {
+      from { opacity: 0; transform: translate(30px, -30px); }
+      to { opacity: 1; transform: translate(0, 0); }
+    }
+  </style>
+</head>
+<body>
+  <div class="screen-corner corner-tl"></div>
+  <div class="screen-corner corner-tr"></div>
+  <div class="screen-corner corner-br"></div>
+  <div class="screen-corner corner-bl"></div>
+
+  <div class="clue clue-tl">1. The truth lies in one’s natal day.</div>
+  <div class="clue clue-tr">3. Locate the beginning, the core of it will be the lead.</div>
+  <div class="clue clue-bl">2. The belief derives from a ROBLOX description, specifically the former primary handle.</div>
+  <div class="clue clue-br">4. Contact the participant, the path of that contact is the answer.</div>
+
+  <div class="container">
+    <div id="loadingSection">
+      <h2 class="loading-title">INITIALIZING SYSTEM</h2>
+      <div class="bar-box">
+        <div class="bar-fill" id="loadingBar"></div>
+      </div>
+      <p id="loadingPercent">0%</p>
+    </div>
+
+    <div id="welcomeText">
+      <h2>W  E  L  C  O  M  E</h2>
+    </div>
+
+    <div id="passwordSection">
+      <div class="password-ui">
+        <div class="input-box" id="inputBox">
+          <div id="fakeInput" class="fake-input placeholder" tabindex="0">
+            <span id="displayText" class="display">INPUT</span><span class="caret"></span>
+          </div>
+        </div>
+        <button id="enterButton">enter</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const successSound = new Audio("success.mp3")
+    const failSound = new Audio("fail.mp3")
+    const loadingBar = document.getElementById("loadingBar")
+    const loadingPercent = document.getElementById("loadingPercent")
+    const loadingSection = document.getElementById("loadingSection")
+    const welcomeText = document.getElementById("welcomeText")
+    const passwordSection = document.getElementById("passwordSection")
+    const inputBox = document.getElementById("inputBox")
+    const fakeInput = document.getElementById("fakeInput")
+    const displayText = document.getElementById("displayText")
+    const enterButton = document.getElementById("enterButton")
+    const screenCorners = document.querySelectorAll(".screen-corner")
+    const clues = document.querySelectorAll(".clue")
+
+    let progress = 0
+    let currentStep = 0
+    const steps = 22
+    let realValue = ""
+    let allSelected = false
+
+    function renderFakeInput() {
+      if (realValue.length === 0) {
+        fakeInput.classList.add("placeholder")
+        displayText.textContent = "INPUT"
+      } else {
+        fakeInput.classList.remove("placeholder")
+        displayText.textContent = realValue
+      }
+    }
+
+    function focusFakeInput() {
+      fakeInput.classList.add("focused")
+    }
+
+    function blurFakeInput() {
+      fakeInput.classList.remove("focused")
+      allSelected = false
+    }
+
+    async function copyCurrentValue() {
+      if (!realValue) return
+      try {
+        await navigator.clipboard.writeText(realValue)
+      } catch (err) {
+        console.log("copy failed", err)
+      }
+    }
+
+    async function pasteFromClipboard() {
+      try {
+        const pasted = await navigator.clipboard.readText()
+        if (!pasted) return
+        realValue = pasted.trim()
+        renderFakeInput()
+      } catch (err) {
+        console.log("paste failed", err)
+      }
+    }
+
+    fakeInput.addEventListener("click", () => {
+      focusFakeInput()
+      allSelected = false
+    })
+
+    fakeInput.addEventListener("focus", focusFakeInput)
+    fakeInput.addEventListener("blur", blurFakeInput)
+
+    fakeInput.addEventListener("paste", (e) => {
+      e.preventDefault()
+      const pasted = (e.clipboardData || window.clipboardData).getData("text")
+      if (!pasted) return
+      realValue = pasted.trim()
+      allSelected = false
+      renderFakeInput()
+    })
+
+    fakeInput.addEventListener("keydown", async (e) => {
+      const key = e.key.toLowerCase()
+
+      if ((e.ctrlKey || e.metaKey) && key === "a") {
+        e.preventDefault()
+        allSelected = true
+        return
+      }
+
+      if ((e.ctrlKey || e.metaKey) && key === "c") {
+        e.preventDefault()
+        await copyCurrentValue()
+        return
+      }
+
+      if ((e.ctrlKey || e.metaKey) && key === "v") {
+        e.preventDefault()
+        await pasteFromClipboard()
+        return
+      }
+
+      if (e.key === "Enter") {
+        e.preventDefault()
+        checkPassword()
+        return
+      }
+
+      if (e.key === "Backspace") {
+        e.preventDefault()
+        if (allSelected) {
+          realValue = ""
+        } else {
+          realValue = realValue.slice(0, -1)
+        }
+        allSelected = false
+        renderFakeInput()
+        return
+      }
+
+      if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        e.preventDefault()
+        if (allSelected) {
+          realValue = e.key
+        } else {
+          realValue += e.key
+        }
+        allSelected = false
+        renderFakeInput()
+      }
+    })
+
+    enterButton.addEventListener("click", checkPassword)
+
+    const interval = setInterval(() => {
+      currentStep++
+
+      let jump = Math.random() * 10 + 2
+      progress += jump
+
+      if (currentStep >= steps || progress >= 100) {
+        progress = 100
+        clearInterval(interval)
+
+        loadingBar.style.width = "100%"
+        loadingPercent.textContent = "100%"
+
+        setTimeout(() => {
+          loadingSection.style.display = "none"
+
+          welcomeText.style.display = "block"
+          welcomeText.classList.add("fade-in")
+
+          setTimeout(() => {
+            welcomeText.classList.remove("fade-in")
+            welcomeText.classList.add("fade-out")
+
+            setTimeout(() => {
+              welcomeText.style.display = "none"
+
+              passwordSection.style.display = "block"
+              passwordSection.classList.add("fade-in")
+
+              screenCorners.forEach(c => c.classList.add("corner-in"))
+              clues.forEach(c => c.style.opacity = "1")
+
+              fakeInput.focus()
+              focusFakeInput()
+            }, 700)
+          }, 1000)
+        }, 150)
+      } else {
+        loadingBar.style.width = Math.min(progress, 99) + "%"
+        loadingPercent.textContent = Math.floor(progress) + "%"
+      }
+    }, 90)
+
+    async function checkPassword() {
+      try {
+        const res = await fetch("/check-password", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({ password: realValue })
+        })
+
+        const data = await res.json()
+
+        if (data.redirect) {
+          window.location.href = data.redirect
+          return
+        }
+
+        if (!data.valid) {
+          failSound.currentTime = 0
+          failSound.play().catch(() => {})
+
+          inputBox.classList.remove("shake")
+          void inputBox.offsetWidth
+          inputBox.classList.add("shake")
+          return
+        }
+
+        const corner = document.querySelector("." + data.corner)
+        const clue = document.querySelector("." + data.clue)
+
+        successSound.currentTime = 0
+        successSound.play().catch(() => {})
+
+        if (corner) {
+          corner.classList.add("unlocked")
+        }
+
+        if (clue) {
+          clue.classList.add("unlocked")
+          clue.textContent = data.text
+        }
+
+        realValue = ""
+        allSelected = false
+        renderFakeInput()
+      } catch (err) {
+        console.error("Password check failed:", err)
+        inputBox.classList.remove("shake")
+        void inputBox.offsetWidth
+        inputBox.classList.add("shake")
+      }
+    }
+
+    renderFakeInput()
+  </script>
+</body>
+</html>
